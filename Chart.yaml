@@ -1,0 +1,6 @@
+apiVersion: v2
+name: diploi-astro
+description: Astro is an all-in-one web framework for building fast, content-focused websites.
+type: application
+version: 1.0.0
+appVersion: 1.16.0

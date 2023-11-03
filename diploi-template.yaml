@@ -1,0 +1,64 @@
+diploiTemplateVersion: V1.0
+name: diploi-astro
+description: Astro is an all-in-one web framework for building fast, content-focused websites.
+defaultName: Astro
+
+stages:
+  - name: Development
+    identifier: development
+  - name: Staging
+    identifier: staging
+  - name: Production
+    identifier: production
+
+contexts:
+  - name: app
+    identifier: app
+
+repositories:
+  - name: app
+    identifier: app
+
+hosts:
+  - name: App
+    identifier: app
+    urlFormat: '[name].[default-domain]'
+
+ssh:
+  - usernameFormat: 'app'
+    contexts: label=app
+    stages:
+      - development
+      - staging
+  - usernameFormat: 'app-[index]'
+    contexts: label=app
+    stages:
+      - production
+
+logs:
+  - identifier: www-log
+    name: Astro Log
+    labelSelector: app=app
+    command: tail -n 2000 -F /var/log/www.log
+
+images:
+  - identifier: app
+    repository: app
+    dockerfile: Dockerfile
+    image: ghcr.io/diploi/astro-template
+    initialProjectImage: ghcr.io/diploi/astro-template-initial-project
+    stages:
+      - development
+      - production
+      - staging
+    manualBuildStages:
+      - development
+
+storage:
+  - identifier: app
+    stages:
+      - development
+    sizeMiB: 6144
+
+status:
+  url: http://app:3000/status
