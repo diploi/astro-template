@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev --port 80 --host",
-    "start": "if [ ${STAGE} = \"production\" ]; then node ./dist/server/entry.mjs; else npm run dev; fi",
+    "start": "if [ ${STAGE} = \"production\" ]; then PORT=80 node ./dist/server/entry.mjs; else npm run dev; fi",
     "build": "astro check && astro build",
     "preview": "astro preview --port 80 --host",
     "astro": "astro"
