@@ -15,6 +15,35 @@ contexts:
   - name: app
     identifier: app
 
+parameterGroups:
+  - name: PostgreSQL Database
+    identifier: postgres
+    toggleable: true
+    description: Database connection info
+    defaultValue: FALSE
+    parameters:
+      - name: Host
+        identifier: POSTGRES_HOST
+        defaultValue: postgres
+        type: string
+      - name: Port
+        identifier: POSTGRES_PORT
+        defaultValue: 5432
+        type: integer
+      - name: User
+        identifier: POSTGRES_USER
+        defaultValue: postgres
+        type: string
+        contexts: label=postgres,label=app
+      - name: Password
+        identifier: POSTGRES_PASSWORD
+        defaultValue: postgres
+        type: secret
+      - name: Schema
+        identifier: POSTGRES_DB
+        defaultValue: todo
+        type: string
+
 repositories:
   - name: app
     identifier: app
@@ -59,6 +88,12 @@ storage:
     stages:
       - development
     sizeMiB: 6144
+  - identifier: postgres
+    stages:
+      - production
+      - staging
+      - development
+    sizeMiB: 4096
 
 status:
   url: http://app:3000/status
