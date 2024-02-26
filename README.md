@@ -8,5 +8,5 @@ You can optionally add a PostgreSQL DB to your project.
 Connect via CLI:
 
 ```bash
-su postgres -c 'psql'
+psql "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"
 ```

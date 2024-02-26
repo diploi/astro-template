@@ -41,7 +41,7 @@ parameterGroups:
         type: secret
       - name: Schema
         identifier: POSTGRES_DB
-        defaultValue: todo
+        defaultValue: astro
         type: string
 
 repositories:
