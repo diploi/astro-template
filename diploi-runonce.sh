@@ -30,12 +30,22 @@ if [ ! "$(ls -A /app)" ]; then
 
   progress "Pulling code";
 
-  git init;
+  git init --initial-branch=main
   git config credential.helper '!diploi-credential-helper';
   git remote add --fetch origin $REPOSITORY_URL;
-  git checkout -f $REPOSITORY_BRANCH;
+  if [ -z "$REPOSITORY_TAG" ]; then
+    git checkout -f $REPOSITORY_BRANCH;
+  else
+    git checkout -f -q $REPOSITORY_TAG;
+    git checkout -b main
+    git branch --set-upstream-to=origin/main main
+  fi
   git remote set-url origin "$REPOSITORY_URL";
   git config --unset credential.helper;
+
+  # Configure VSCode
+  mkdir -p /root/.local/share/code-server/User
+  cp /usr/local/etc/diploi-vscode-settings.json /root/.local/share/code-server/User/settings.json
 
   progress "Installing";
   npm install;
@@ -50,6 +60,7 @@ env >> /etc/environment
 
 # Now that everything is initialized, start all services
 supervisorctl start www
+supervisorctl start code-server
 
 progress "Runonce done";
 

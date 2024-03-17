@@ -1,0 +1,120 @@
+name: DiploiBuild
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  INITIAL_PROJECT_IMAGE_NAME: ${{ github.repository }}-initial-project
+  DEMO_TARGET_REPOSITORY: 'https://x-access-token:${{ secrets.DEMO_REPOSITORY_PAT }}@github.com/diploi/${{ github.repository }}-demo.git'
+  DEMO_TAG_NAME: '${GITHUB_REF#refs/tags/}'
+
+jobs:
+
+  DemoSync: 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v2
+
+      - name: Sync initialProject folder and push tag
+        run: |
+          # Configure git
+          git config --global user.email "demo-sync@diploi.com"
+          git config --global user.name "Demo Sync"
+          
+          # Clone the target repository using HTTPS and PAT for authentication 
+          git clone ${{ env.DEMO_TARGET_REPOSITORY }} temp_repo
+          cd temp_repo
+          
+          # Sync the folder
+          rsync -av --delete --exclude='.git/' ../initialProject/ ./
+          
+          # Commit and push the changes, if there are any
+          git add .
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Commit sync" && git push origin main)
+          
+          # Tag and push the tag
+          git tag ${{ env.DEMO_TAG_NAME }}
+          git push origin --tags
+
+
+  TemplateBuild:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the GitHub container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          platforms: linux/arm64
+          pull: true
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+  
+  InitialProjectBuild:
+    needs: TemplateBuild
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.INITIAL_PROJECT_IMAGE_NAME }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the GitHub container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: InitialProjectDockerfile
+          platforms: linux/arm64
+          pull: true
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
