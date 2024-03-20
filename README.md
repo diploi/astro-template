@@ -10,3 +10,7 @@ Connect via CLI:
 ```bash
 psql "postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"
 ```
+
+---
+
+[<img src="https://diploi.com/launch-template-button.svg">](https://diploi.com/launch/astro)
