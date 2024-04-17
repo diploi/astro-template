@@ -28,27 +28,51 @@ if [ ! "$(ls -A /app)" ]; then
   # Generate root ssh key
   ssh-keygen -A;
 
-  progress "Pulling code";
-
-  git init --initial-branch=main
-  git config credential.helper '!diploi-credential-helper';
-  git remote add --fetch origin $REPOSITORY_URL;
-  if [ -z "$REPOSITORY_TAG" ]; then
-    git checkout -f $REPOSITORY_BRANCH;
+  if [ "$REPOSITORY_URL" = "https://github.com/diploi/astro-template-demo.git" ]; then
+    # Using quick launch cached initial files
+    progress "Using quick launch cache start";
+    find /app-quick-launch/ -mindepth 1 -maxdepth 1 -exec mv -t /app -- {} +
+    rmdir /app-quick-launch
+    progress "Using quick launch cache done";
   else
-    git checkout -f -q $REPOSITORY_TAG;
-    git checkout -b main
-    git branch --set-upstream-to=origin/main main
+    progress "Pulling code";
+    git init --initial-branch=main
+    git config credential.helper '!diploi-credential-helper';
+    git remote add --fetch origin $REPOSITORY_URL;
+    if [ -z "$REPOSITORY_TAG" ]; then
+      git checkout -f $REPOSITORY_BRANCH;
+    else
+      git checkout -f -q $REPOSITORY_TAG;
+      git checkout -b main
+      git branch --set-upstream-to=origin/main main
+    fi
+    git remote set-url origin "$REPOSITORY_URL";
+    git config --unset credential.helper;
+
+    progress "Installing";
+    npm install;
   fi
-  git remote set-url origin "$REPOSITORY_URL";
-  git config --unset credential.helper;
 
   # Configure VSCode
   mkdir -p /root/.local/share/code-server/User
   cp /usr/local/etc/diploi-vscode-settings.json /root/.local/share/code-server/User/settings.json
-
-  progress "Installing";
-  npm install;
+  # TODO: How to update these if env changes?
+  cat > /app/.vscode/settings.json << EOL
+{
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "$POSTGRES_HOST",
+      "port": $POSTGRES_PORT,
+      "driver": "PostgreSQL",
+      "name": "PostgreSQL",
+      "database": "$POSTGRES_DB",
+      "username": "$POSTGRES_USER",
+      "password": "$POSTGRES_PASSWORD",
+    }
+  ]
+}
+EOL
 
 fi
 
@@ -59,6 +83,7 @@ update-ca-certificates
 env >> /etc/environment
 
 # Now that everything is initialized, start all services
+progress "Starting services";
 supervisorctl start www
 supervisorctl start code-server
 

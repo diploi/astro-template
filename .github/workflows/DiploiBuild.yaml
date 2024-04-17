@@ -13,7 +13,6 @@ env:
   INITIAL_PROJECT_IMAGE_NAME: ${{ github.repository }}-initial-project
   DEMO_TARGET_REPOSITORY: 'https://x-access-token:${{ secrets.DEMO_REPOSITORY_PAT }}@github.com/${{ github.repository }}-demo.git'
   DEMO_TAG_NAME: '${GITHUB_REF#refs/tags/}'
-  TAG_NAME: '${GITHUB_REF#refs/tags/}'
   
 jobs:
 
